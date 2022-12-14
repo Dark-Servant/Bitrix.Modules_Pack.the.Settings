@@ -167,6 +167,28 @@ class Property extends Base
         return $result;
     }
 
+    public function ListValues(string $enumClassName = PropertyEnum::class)
+    {
+        if (!$this->ID) return;
+
+        Loader::includeModule('iblock');
+
+        $enumClassName = ClassName::getLastRelative(PropertyEnum::class, $enumClassName);
+        $list = \CIBlockPropertyEnum::GetLIst(['ID' => 'ASC'], ['PROPERTY_ID' => $this->ID]);
+        while ($enumUnit = $list->Fetch()) {
+            $result = $enumClassName::init($enumUnit + ['PROPERTY_CLASS' => $this]);
+            $special_result = (new \ReflectionProperty($result, 'ID'));
+            $special_result->setAccessible(true);
+            $special_result->setValue($result, $enumUnit['ID']);
+            yield $result;
+        }
+    }
+
+    public function getListValues(string $enumClassName = PropertyEnum::class)
+    {
+        return iterator_to_array($this->ListValues($enumClassName));
+    }
+
     public function save()
     {
         if (!$this->IBlock->getID())
