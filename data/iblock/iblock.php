@@ -111,6 +111,28 @@ class IBlock extends Base
         ];
     }
 
+    public function Properties(string $propertyClassName = Property::class)
+    {
+        if (!$this->ID) return;
+
+        Loader::includeModule('iblock');
+
+        $propertyClassName = ClassName::getLastRelative(Property::class, $propertyClassName);
+        $properties = \CIBlockProperty::GetLIst(['ID' => 'ASC'], ['IBLOCK_ID' => $this->ID]);
+        while ($property = $properties->Fetch()) {
+            $result = $propertyClassName::init($property + ['IBLOCK_CLASS' => $this]);
+            $special_result = (new \ReflectionProperty($result, 'ID'));
+            $special_result->setAccessible(true);
+            $special_result->setValue($result, $property['ID']);
+            yield $result;
+        }
+    }
+
+    public function getProperties(string $propertyClassName = Property::class)
+    {
+        return iterator_to_array($this->Properties($propertyClassName));
+    }
+
     public function setGroupPermissions(array $permissions = [])
     {
         if (!$this->ID) return $this;
