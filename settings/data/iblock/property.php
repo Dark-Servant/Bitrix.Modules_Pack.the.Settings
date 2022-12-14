@@ -17,6 +17,7 @@ class Property extends Base
     protected $iblock;
     protected $toIBlockPrint = true;
     protected $linkedIBlock = false;
+    protected $enumClassName = PropertyEnum::class;
 
     public function __construct(DataProperty $property, $iblock = null)
     {
@@ -39,6 +40,11 @@ class Property extends Base
         return sprintf('%s_MDL', $this->ID);
     }
 
+    public function setEnumClassName(string $enumClassName = PropertyEnum::class)
+    {
+        $this->enumClassName = ClassName::getLastRelative(PropertyEnum::class, $enumClassName);
+    }
+
     public function getConstantValues(Printer $printer = null): array
     {
         $settingID = $this->iblock->getID();
@@ -56,9 +62,14 @@ class Property extends Base
 
     public function getLangValues(Printer $printer = null): array
     {
-        return [
+        $result = [
             $this->langID => $this->data->getName()
         ];
+        $enumClassName = $this->enumClassName;
+        foreach ($this->data->ListValues() as $enumUnit) {
+            $result += (new $enumClassName($enumUnit))->getLangValues($printer);
+        }
+        return $result;
     }
 
     public function getShortSettings(Printer $printer = null): array
@@ -78,8 +89,15 @@ class Property extends Base
             'IBLOCK_ID' => $iblockID
         ] + $this->data->getChangedValues();
 
-        if ($linkedIBlockID)
+        if ($result['PROPERTY_TYPE'] == 'L') {
+            $enumClassName = $this->enumClassName;
+            foreach ($this->data->ListValues() as $enumUnit) {
+                $result['LIST_VALUES'][] = (new $enumClassName($enumUnit, $this))->getShortSettings($printer);
+            }
+
+        } elseif ($linkedIBlockID) {
             $result['LINK_IBLOCK_ID'] = $linkedIBlockID;
+        }
 
         return $result;
     }
