@@ -14,6 +14,8 @@ class IBlock extends Base
     const SETTINGS_CODE = 'IBlocks';
 
     protected $typeID;
+    protected $toPropertyPrint = true;
+    protected $propertyClassName = Property::class;
 
     public function __construct(DataIBlock $iblock, $typeID = null)
     {
@@ -24,6 +26,11 @@ class IBlock extends Base
         $this->ID = sprintf('IBLOCK_{%s_CODE}', $code);
         $this->langID = sprintf('IB_{LANG_%s_NAME}', $code);
 
+    }
+
+    public function setPropertyClassName(string $propertyClassName = Property::class)
+    {
+        $this->propertyClassName = ClassName::getLastRelative(Property::class, $propertyClassName);
     }
 
     public function getConstantValues(Printer $printer = null): array
@@ -88,9 +95,25 @@ class IBlock extends Base
         return '';
     }
 
+    public function setPropertyPrinting(bool $toPrint = true): IBlock
+    {
+        $this->toPropertyPrint = $toPrint;
+        return $this;
+    }
+
     public function isPreparedForPrinter(Printer $printer): bool
     {
         $printer->addData($this->typeID);
         return true;
+    }
+
+    public function finishPrinting(Printer $printer)
+    {
+        if (!$this->toPropertyPrint) return;
+
+        $propertyClassName = $this->propertyClassName;
+        foreach ($this->data->getProperties() as $property) {
+            $printer->addData((new $propertyClassName($property, $this))->setIBlockPrinting(false));
+        }
     }
 }

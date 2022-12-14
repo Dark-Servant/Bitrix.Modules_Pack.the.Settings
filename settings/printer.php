@@ -3,6 +3,7 @@ namespace PackTheSettings\Settings;
 
 use \PackTheSettings\Code\Comment;
 use \PackTheSettings\Settings\Data\IBase;
+use \PackTheSettings\Settings\Types\Base as BaseType;
 
 class Printer
 {
@@ -155,7 +156,7 @@ class Printer
                 if (is_string($value)) {
                     $areaValue .= sprintf('define(\'%s\', \'%s\');', $resultName, addslashes($value)) . PHP_EOL;
 
-                } elseif (is_numeric($value)) {
+                } elseif (is_numeric($value) || ($value instanceof BaseType)) {
                     $areaValue .= sprintf('define(\'%s\', %s);', $resultName, strval($value)) . PHP_EOL;
 
                 } else {
