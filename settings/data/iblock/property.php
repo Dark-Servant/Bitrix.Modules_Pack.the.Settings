@@ -26,7 +26,7 @@ class Property extends Base
  
         $code = strtoupper(md5(sprintf('%s+%s', $this->data->getCode(), $this->data->getID())));
         $iblockID = preg_replace('/[\{\}]/', '', $this->iblock->getID());
-        $this->ID = sprintf('IB_PR_{%s_%s_CODE}', $iblockID, $code);
+        $this->ID = sprintf('INFS_IB_{%s_%s_CODE}', $iblockID, $code);
         $this->langID = sprintf('IB_PR_{LANG_%s_%s_NAME}', $iblockID, $code);
 
         if (($linkedIBlock = $this->data->getLinkedIBlock())) {

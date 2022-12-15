@@ -97,12 +97,15 @@ class Printer
         return strtr($value, $this->replacingID);
     }
 
-    public function SpecialLangIDs()
+    public function SpecialLangIDs(bool $withoutSpecialIDs = false)
     {
+        $specialIDs = $withoutSpecialIDs ? $this->getSpecialIDs() : [];
         foreach ($this->Data() as $unit) {
             foreach ($unit->getLangValues($this) as $name => $value) {
-                if (!preg_match('/\{([^\{\}]*)\}[^\{\}]*$/', $name, $nameParts))
-                    continue;
+                if (
+                    !preg_match('/\{([^\{\}]*)\}[^\{\}]*$/', $name, $nameParts)
+                    || in_array($nameParts[1], $specialIDs)
+                ) continue;
 
                 yield $nameParts[1] => [
                     'TITLE' => strtr($unit->getComment(self::COMMENT_LANG_NAME, $this), ['#VALUE#' => $value]),
@@ -112,9 +115,9 @@ class Printer
         }
     }
 
-    public function getSpecialLangIDs()
+    public function getSpecialLangIDs(bool $withoutSpecialIDs = false): array
     {
-        return iterator_to_array($this->SpecialLangIDs());
+        return iterator_to_array($this->SpecialLangIDs($withoutSpecialIDs));
     }
 
     public function replacingSpecialLangIDs(string $value)

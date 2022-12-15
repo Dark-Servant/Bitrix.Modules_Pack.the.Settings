@@ -23,8 +23,8 @@ class IBlock extends Base
         $this->typeID = ClassName::getInstance(Type::class, $typeID, $iblock->getTypeID());
 
         $code = strtoupper(md5(sprintf('%s+%s', $this->data->getCode(), $this->data->getID())));
-        $this->ID = sprintf('IBLOCK_{%s_CODE}', $code);
-        $this->langID = sprintf('IB_{LANG_%s_NAME}', $code);
+        $this->ID = sprintf('INFS_IBLOCK_{%s_CODE}', $code);
+        $this->langID = sprintf('IBLOCK_{LANG_%s_NAME}', $code);
 
     }
 

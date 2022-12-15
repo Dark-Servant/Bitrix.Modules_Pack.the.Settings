@@ -17,7 +17,7 @@ class Type extends Base
         $this->data = $typeID;
 
         $code = strtoupper(md5($this->data->getCode()));
-        $this->ID = sprintf('IB_TYPE_{%s}', $code);
+        $this->ID = sprintf('INFS_IB_TYPE_{%s}', $code);
         $this->langID = sprintf('IB_T_{LANG_%s_NAME}', $code);
     }
 
