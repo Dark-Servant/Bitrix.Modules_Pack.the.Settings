@@ -6,8 +6,9 @@ abstract class Base implements IBase
     protected $params = [];
     protected $errorText = '';
 
-    public function setParams(array $params)
+    public function setParams(array $params): IBase
     {
+        $this->errorText = '';
         $this->params = $params;
         return $this;
     }
@@ -17,9 +18,9 @@ abstract class Base implements IBase
         return $this->errorText;
     }
 
-    public function getChangedValues(): array
+    public function getChangedParams(): array
     {
-        $defaultValues = static::getDefaultValues();
+        $defaultValues = static::getDefaultParams();
         return array_filter(
                     $this->params,
                     function($value, $key) use($defaultValues) {
@@ -29,8 +30,8 @@ abstract class Base implements IBase
                 );
     }
 
-    public function getNormalizedValues(): array
+    public function getNormalizedParams(): array
     {
-        return $this->getMainParams() + $this->getChangedValues() + static::getDefaultValues();
+        return $this->getMainParams() + $this->getChangedParams() + static::getDefaultParams();
     }
 }

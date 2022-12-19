@@ -2,8 +2,10 @@
 namespace PackTheSettings\Data\IBlock;
 
 use \PackTheSettings\Arguments\ClassName;
+use \PackTheSettings\Data\IBase;
 use \PackTheSettings\Data\Base;
 use \Bitrix\Main\Loader;
+use \Bitrix\Main\Localization\Loc;
 
 class IBlock extends Base
 {
@@ -14,7 +16,11 @@ class IBlock extends Base
 
     public function __construct(string $name, string $code, Type $typeID)
     {
-        $this->name = $name;
+        /**
+         * В коде для инфоблоков есть своя проверка на то,
+         * указано ли название. Свою проверку писать не надо
+         */
+        $this->name = trim($name);
         $this->code = $code ?: md5($name);
         $this->typeID = $typeID;
     }
@@ -39,26 +45,26 @@ class IBlock extends Base
         return $this->typeID;
     }
 
-    public static function init(array $data)
+    public static function init(array $data): ?IBase
     {
-        if (!is_string($data['NAME'])) return;
+        if (!is_string($data['NAME'])) return null;
 
         $typeID = ClassName::getInstanceViaID(Type::class, $data['TYPE_ID_CLASS'], $data['IBLOCK_TYPE_ID']);
-        if (!$typeID) return;
+        if (!$typeID) return null;
 
         $unit = new static($data['NAME'], $data['CODE'] ?: '', $typeID);
         return $unit->setParams($data);
     }
 
-    public static function get(array $filter)
+    public static function get(array $filter): ?IBase
     {
         $ID = intval($filter['ID']);
-        if ($ID < 1) return;
+        if ($ID < 1) return null;
         
         Loader::includeModule('iblock');
 
         $data = \CIBlock::GetByID($ID)->Fetch();
-        if (!$data) return;
+        if (!$data) return null;
 
         if (isset($filter['TYPE_ID_CLASS']))
             $data['TYPE_ID_CLASS'] = $filter['TYPE_ID_CLASS'];
@@ -68,7 +74,7 @@ class IBlock extends Base
         return $unit;
     }
 
-    public static function getDefaultValues(): array
+    public static function getDefaultParams(): array
     {
         return [
             'DETAIL_PAGE_URL' => '',
@@ -88,7 +94,7 @@ class IBlock extends Base
             'XML_ID' => '',
             'INDEX_ELEMENT' => 'Y',
             'INDEX_SECTION' => 'N',
-            'SORT' => '500',
+            'SORT' => '100',
         ];
     }
 
@@ -133,6 +139,13 @@ class IBlock extends Base
         return iterator_to_array($this->Properties($propertyClassName));
     }
 
+    public function getNewProperty(string $name, string $code, string $propertyClassName = Property::class): ?Property
+    {
+        if (!$this->ID) return null;
+
+        return ClassName::getInstance(Property::class, $propertyClassName, $name, $code, $this);
+    }
+
     public function setGroupPermissions(array $permissions = [])
     {
         if (!$this->ID) return $this;
@@ -145,22 +158,31 @@ class IBlock extends Base
 
     public function save()
     {
-        if (!$this->typeID->isExists())
-            throw new \Exception(
-                        Loc::getMessage(
-                            'ERROR_BAD_TYPE_ID_FOR_CREATING',
-                            ['#CLASSNAME#' => get_class($this->typeID)]
-                        )
-                    );
+        if (!$this->typeID->isExists()) {
+            $this->errorText = Loc::getMessage(
+                                    'ERROR_BAD_TYPE_ID_FOR_CREATING',
+                                    ['#CLASSNAME#' => get_class($this->typeID)]
+                                );
+            return 0;
+        }
 
         if ($this->ID) return $this->ID;
 
         Loader::includeModule('iblock');
 
         $iblock = new \CIBlock;
-        $this->ID = $iblock->Add($this->getNormalizedValues());
+        $this->ID = $iblock->Add($this->getNormalizedParams());
         if (!$this->ID) $this->errorText = $iblock->LAST_ERROR;
 
         return $this->ID;
+    }
+
+    public static function remove(array $filter): bool
+    {
+        $iblock = static::get($filter);
+        if (!$iblock) return false;
+
+        \CIBlock::Delete($iblock->ID);
+        return true;
     }
 }

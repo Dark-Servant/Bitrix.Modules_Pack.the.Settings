@@ -2,6 +2,7 @@
 namespace PackTheSettings\Data\IBlock;
 
 use \PackTheSettings\Arguments\ClassName;
+use \PackTheSettings\Data\IBase;
 use \PackTheSettings\Data\Base;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
@@ -20,8 +21,12 @@ class Property extends Base
     
     public function __construct(string $name, string $code, IBlock $IBlock)
     {
-        $this->name = $name;
-        $this->code = $code ?: md5($name);
+        /**
+         * В коде для свойств инфоблоков есть своя проверка на
+         * то, указано ли название. Свою проверку писать не надо
+         */
+        $this->name = trim($name);
+        $this->code = trim($code) ?: md5($name);
         $this->IBlock = $IBlock;
         $this->IBlockClassName = get_class($IBlock);
     }
@@ -51,26 +56,26 @@ class Property extends Base
         return empty($this->params['LINK_IBLOCK_ID']) ? false : $this->params['LINK_IBLOCK_ID'];
     }
     
-    public static function init(array $data)
+    public static function init(array $data): ?IBase
     {
-        if (!is_string($data['NAME'])) return;
+        if (!is_string($data['NAME'])) return null;
 
         $iblock = ClassName::getInstanceViaID(IBlock::class, $data['IBLOCK_CLASS'], $data['IBLOCK_ID']);
-        if (!$iblock) return;
+        if (!$iblock) return null;
 
         $unit = new static($data['NAME'], $data['CODE'] ?: '', $iblock);
         return $unit->setParams($data);
     }
 
-    public static function get(array $filter)
+    public static function get(array $filter): ?IBase
     {
         $ID = intval($filter['ID']);
-        if ($ID < 1) return;
+        if ($ID < 1) return null;
 
         Loader::includeModule('iblock');
 
         $data = \CIBlockProperty::GetByID($ID)->Fetch();
-        if (!$data) return;
+        if (!$data) return null;
 
         if (isset($filter['IBLOCK_CLASS']))
             $data['IBLOCK_CLASS'] = $filter['IBLOCK_CLASS'];
@@ -80,7 +85,7 @@ class Property extends Base
         return $unit;
     }
 
-    public static function getDefaultValues(): array
+    public static function getDefaultParams(): array
     {
         return [
             'SORT' => 100,
@@ -117,7 +122,7 @@ class Property extends Base
 
         $params['LINK_IBLOCK_ID'] = $IBlockClassName::get(['ID' => $params['LINK_IBLOCK_ID']]);
         if (!isset($params['LINK_IBLOCK_ID']))
-            throw new \Exception(Loc::getMessage('ERROR_BAD_LINK_IBLOCK_ID'));
+            $this->errorText = Loc::getMessage('ERROR_BAD_LINK_IBLOCK_ID');
     }
 
     protected static function prepareStringType(array&$params)
@@ -133,9 +138,9 @@ class Property extends Base
                                       : [];
     }
 
-    public function setParams(array $params)
+    public function setParams(array $params): IBase
     {
-        $this->params = $params;
+        parent::setParams($params);
 
         if (!empty($this->params['LINK_IBLOCK_ID'])) {
             static::prepareLinkedIBlock($this->params, $this->IBlockClassName);
@@ -147,10 +152,10 @@ class Property extends Base
         return $this;
     }
 
-    public function getChangedValues(): array
+    public function getChangedParams(): array
     {
         $result = array_merge(
-                        parent::getChangedValues(),
+                        parent::getChangedParams(),
                         array_filter(
                             $this->params,
                             function($value, $key) {
@@ -169,7 +174,7 @@ class Property extends Base
 
     public function ListValues(string $enumClassName = PropertyEnum::class)
     {
-        if (!$this->ID) return;
+        if (!$this->ID) return null;
 
         Loader::includeModule('iblock');
 
@@ -184,29 +189,47 @@ class Property extends Base
         }
     }
 
-    public function getListValues(string $enumClassName = PropertyEnum::class)
+    public function getListValues(string $enumClassName = PropertyEnum::class): array
     {
         return iterator_to_array($this->ListValues($enumClassName));
     }
 
+    public function getNewListValue(string $value, string $enumClassName = PropertyEnum::class): ?PropertyEnum
+    {
+        if (!$this->ID || ($this->params['PROPERTY_TYPE'] != 'L')) return null;
+
+        return ClassName::getInstance(PropertyEnum::class, $enumClassName, $value, $this);
+    }
+
     public function save()
     {
-        if (!$this->IBlock->getID())
-            throw new \Exception(
-                        Loc::getMessage(
-                            'ERROR_BAD_IBLOCK_ID_FOR_CREATING',
-                            ['#CLASSNAME#' => $this->IBlockClassName]
-                        )
-                    );
+        if ($this->errorText) return 0;
+
+        if (!$this->IBlock->getID()) {
+            $this->errorText = Loc::getMessage(
+                                    'ERROR_BAD_IBLOCK_ID_FOR_CREATING',
+                                    ['#CLASSNAME#' => $this->IBlockClassName]
+                                );
+            return 0;
+        }
 
         if ($this->ID) return $this->ID;
 
         Loader::includeModule('iblock');
 
         $property = new \CIBlockProperty;
-        $this->ID = $property->Add($this->getNormalizedValues());
+        $this->ID = $property->Add($this->getNormalizedParams());
         if (!$this->ID) $this->errorText = $property->LAST_ERROR;
 
         return $this->ID;
+    }
+
+    public static function remove(array $filter): bool
+    {
+        $property = static::get($filter);
+        if (!$property) return false;
+
+        \CIBlockProperty::Delete($property->ID);
+        return true;
     }
 }
