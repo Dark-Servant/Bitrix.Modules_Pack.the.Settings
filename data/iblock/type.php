@@ -2,13 +2,17 @@
 namespace PackTheSettings\Data\IBlock;
 
 use \PackTheSettings\Arguments\ClassName;
-use \PackTheSettings\Data\IBase;
-use \PackTheSettings\Data\Base;
-use \Bitrix\Main\Loader;
-use \Bitrix\Main\Localization\Loc;
+use \PackTheSettings\Data\{
+    IBase,
+    Base as DataBase
+};
+use \Bitrix\Main\{
+    Loader,
+    Localization\Loc
+};
 use \Bitrix\IBlock\TypeLanguageTable;
 
-class Type extends Base
+class Type extends DataBase
 {
     const LANG_ID = 'RU';
     const DEFAULT_EXIST_CODES = ['lists', 'bitrix_processes', 'structure'];

@@ -2,12 +2,16 @@
 namespace PackTheSettings\Data\IBlock;
 
 use \PackTheSettings\Arguments\ClassName;
-use \PackTheSettings\Data\IBase;
-use \PackTheSettings\Data\Base;
-use \Bitrix\Main\Loader;
-use \Bitrix\Main\Localization\Loc;
+use \PackTheSettings\Data\{
+    IBase,
+    Base as DataBase
+};
+use \Bitrix\Main\{
+    Loader,
+    Localization\Loc
+};
 
-class IBlock extends Base
+class IBlock extends DataBase
 {
     protected $ID = 0;
     protected $name;

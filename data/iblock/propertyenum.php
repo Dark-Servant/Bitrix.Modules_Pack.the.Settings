@@ -2,11 +2,13 @@
 namespace PackTheSettings\Data\IBlock;
 
 use \PackTheSettings\Arguments\ClassName;
-use \PackTheSettings\Data\IBase;
-use \PackTheSettings\Data\Base;
+use \PackTheSettings\Data\{
+    IBase,
+    Base as DataBase
+};
 use \Bitrix\Main\Loader;
 
-class PropertyEnum extends Base
+class PropertyEnum extends DataBase
 {
     protected $ID = false;
     protected $value;

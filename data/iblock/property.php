@@ -2,16 +2,20 @@
 namespace PackTheSettings\Data\IBlock;
 
 use \PackTheSettings\Arguments\ClassName;
-use \PackTheSettings\Data\IBase;
-use \PackTheSettings\Data\Base;
-use \Bitrix\Main\Loader;
-use \Bitrix\Main\Localization\Loc;
+use \PackTheSettings\Data\{
+    IBase,
+    Base as DataBase
+};
+use \Bitrix\Main\{
+    Loader,
+    Localization\Loc
+};
 
 /**
  * TODO:
  *      1. IBlock "LIST" fields
  */
-class Property extends Base
+class Property extends DataBase
 {
     protected $ID = false;
     protected $name;
@@ -49,11 +53,6 @@ class Property extends Base
     public function getIBlock(): IBlock
     {
         return $this->IBlock;
-    }
-
-    public function getLinkedIBlock()
-    {
-        return empty($this->params['LINK_IBLOCK_ID']) ? false : $this->params['LINK_IBLOCK_ID'];
     }
     
     public static function init(array $data): ?IBase
@@ -115,27 +114,25 @@ class Property extends Base
         ];
     }
 
-    protected static function prepareLinkedIBlock(array&$params, string $IBlockClassName)
+    protected function prepareLinkedIBlock(string $IBlockClassName)
     {
-        if ($params['LINK_IBLOCK_ID'] instanceof IBlock)
+        if ($this->params['LINK_IBLOCK_ID'] instanceof IBlock)
             return;
 
-        $params['LINK_IBLOCK_ID'] = $IBlockClassName::get(['ID' => $params['LINK_IBLOCK_ID']]);
-        if (!isset($params['LINK_IBLOCK_ID']))
-            $this->errorText = Loc::getMessage('ERROR_BAD_LINK_IBLOCK_ID');
+        $this->initParamMethod('linkediblock', ['ID' => $this->params['LINK_IBLOCK_ID']], $IBlockClassName);
     }
 
-    protected static function prepareStringType(array&$params)
+    protected function prepareStringType()
     {
-        if (!array_key_exists('USER_TYPE_SETTINGS', $params))
+        if (!array_key_exists('USER_TYPE_SETTINGS', $this->params))
             return;
 
-        $params['USER_TYPE_SETTINGS'] = is_array($params['USER_TYPE_SETTINGS'])
-                                      ? array_filter(
-                                            $params['USER_TYPE_SETTINGS'],
-                                            function($value) { return $value != 'N'; }
-                                        )
-                                      : [];
+        $this->params['USER_TYPE_SETTINGS'] = is_array($this->params['USER_TYPE_SETTINGS'])
+                                            ? array_filter(
+                                                    $this->params['USER_TYPE_SETTINGS'],
+                                                    function($value) { return $value != 'N'; }
+                                                )
+                                            : [];
     }
 
     public function setParams(array $params): IBase
@@ -143,10 +140,10 @@ class Property extends Base
         parent::setParams($params);
 
         if (!empty($this->params['LINK_IBLOCK_ID'])) {
-            static::prepareLinkedIBlock($this->params, $this->IBlockClassName);
+            $this->prepareLinkedIBlock($this->IBlockClassName);
 
         } elseif ($this->params['PROPERTY_TYPE'] == 'S') {
-            static::prepareStringType($this->params);
+            $this->prepareStringType();
         }
 
         return $this;
@@ -166,8 +163,6 @@ class Property extends Base
                             ARRAY_FILTER_USE_BOTH
                         )
                     );
-        if (isset($result['LINK_IBLOCK_ID']))
-            $result['LINK_IBLOCK_ID'] = $result['LINK_IBLOCK_ID']->getID();
 
         return $result;
     }
