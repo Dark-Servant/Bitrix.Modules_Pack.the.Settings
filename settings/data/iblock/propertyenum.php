@@ -5,9 +5,9 @@ use \PackTheSettings\Arguments\ClassName;
 use \PackTheSettings\Data\IBlock\PropertyEnum as DataPropertyEnum;
 
 use \PackTheSettings\Settings\Printer;
-use \PackTheSettings\Settings\Data\Base;
+use \PackTheSettings\Settings\Data\Base as SettingsBase;
 
-class PropertyEnum extends Base
+class PropertyEnum extends SettingsBase
 {
     const SETTINGS_CODE = false;
 
@@ -38,7 +38,7 @@ class PropertyEnum extends Base
     {
         return [
             'LANG_CODE' => $printer ? $printer->replacingSpecialLangIDs($this->ID) : $this->ID,
-        ] + $this->data->getChangedValues();
+        ] + $this->data->getChangedParams();
     }
 
     public function getComment(int $commentType, Printer $printer = null): string

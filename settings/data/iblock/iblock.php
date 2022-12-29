@@ -5,11 +5,11 @@ use \PackTheSettings\Arguments\ClassName;
 use \PackTheSettings\Data\IBlock\IBlock as DataIBlock;
 
 use \PackTheSettings\Settings\Printer;
-use \PackTheSettings\Settings\Data\Base;
+use \PackTheSettings\Settings\Data\Base as SettingsBase;
 
 use \Bitrix\Main\Localization\Loc;
 
-class IBlock extends Base
+class IBlock extends SettingsBase
 {
     const SETTINGS_CODE = 'IBlocks';
 
@@ -65,7 +65,7 @@ class IBlock extends Base
         return [
                 'LANG_CODE' => $langCode,
                 'IBLOCK_TYPE_ID' => $iblockTypeID,
-            ] + $this->data->getChangedValues();
+            ] + $this->data->getChangedParams();
     }
 
     public function getComment(int $commentType, Printer $printer = null): string

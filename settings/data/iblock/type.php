@@ -4,11 +4,11 @@ namespace PackTheSettings\Settings\Data\IBlock;
 use \PackTheSettings\Data\IBlock\Type as DataType;
 
 use \PackTheSettings\Settings\Printer;
-use \PackTheSettings\Settings\Data\Base;
+use \PackTheSettings\Settings\Data\Base as SettingsBase;
 
 use \Bitrix\Main\Localization\Loc;
 
-class Type extends Base
+class Type extends SettingsBase
 {
     const SETTINGS_CODE = 'IBlockTypes';
 
@@ -49,7 +49,7 @@ class Type extends Base
 
         return [
                 'LANG_CODE' => $this->langID
-            ] + $this->data->getChangedValues();
+            ] + $this->data->getChangedParams();
     }
 
     public function getComment(int $commentType, Printer $printer = null): string

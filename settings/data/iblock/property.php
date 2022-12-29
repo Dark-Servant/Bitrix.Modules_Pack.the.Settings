@@ -5,12 +5,12 @@ use \PackTheSettings\Arguments\ClassName;
 use \PackTheSettings\Data\IBlock\Property as DataProperty;
 
 use \PackTheSettings\Settings\Printer;
-use \PackTheSettings\Settings\Data\Base;
+use \PackTheSettings\Settings\Data\Base as SettingsBase;
 use \PackTheSettings\Settings\Types\Base as BaseType;
 
 use \Bitrix\Main\Localization\Loc;
 
-class Property extends Base
+class Property extends SettingsBase
 {
     const SETTINGS_CODE = 'IBlockProperties';
 
@@ -87,7 +87,7 @@ class Property extends Base
         $result = [
             'LANG_CODE' => $langCode,
             'IBLOCK_ID' => $iblockID
-        ] + $this->data->getChangedValues();
+        ] + $this->data->getChangedParams();
 
         if ($result['PROPERTY_TYPE'] == 'L') {
             $enumClassName = $this->enumClassName;
